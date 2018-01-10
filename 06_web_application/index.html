@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Airbnb app</title>
+    <link rel="stylesheet" href="static/d3.slider.css" />
+    <style>
+        body {
+            font-family: Verdana, Arial, sans-serif;
+        }
+
+        .space {
+            margin-bottom: 20 px;
+        }
+
+        .smallspace {
+            margin-bottom: 5 px;
+        }
+
+        .wrapper {
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 0px;
+        }
+
+        #bar_chart {
+            margin-bottom: 0 px;
+        }
+
+        .bar {
+            fill: #F95D60;
+        }
+
+        span {
+            color: steelblue;
+        }
+
+        /*Rectangle bar class styling*/
+
+        .bar_cal {
+            fill: #F95D60
+        }
+
+        .bar_cal:hover {
+            fill: #003366
+        }
+
+        /*Text class styling*/
+
+        .text_cal {
+            fill: white;
+            font-family: sans-serif
+        }
+
+        .axis text {
+            font: 10px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .d3-tip {
+          line-height: 1;
+          font-weight: bold;
+          padding: 12px;
+          background: rgba(0, 0, 0, 0.6);
+          color: #fff;
+          border-radius: 2px;
+        }
+
+        /* Creates a small triangle extender for the tooltip */
+        .d3-tip:after {
+          box-sizing: border-box;
+          display: inline;
+          font-size: 10px;
+          width: 100%;
+          line-height: 1;
+          color: rgba(0, 0, 0, 0.8);
+          content: "\25BC";
+          position: absolute;
+          text-align: center;
+        }
+
+        /* Style northward tooltips differently */
+        .d3-tip.n:after {
+          margin: -1px 0 0 0;
+          top: 100%;
+          left: 0;
+        }
+
+        /* custom */
+        .row.no-gutter {
+          margin-left: 0;
+          margin-right: 0;
+        }
+        .row.no-gutter [class*='col-']:not(:first-child),
+        .row.no-gutter [class*='col-']:not(:last-child) {
+          padding-right: 0.5;
+          padding-left: 0;
+        }
+
+        .row.small-gutter {
+          margin-left: 0;
+          margin-right: 15;
+        }
+        .row.small-gutter [class*='col-']:not(:first-child),
+        .row.small-gutter [class*='col-']:not(:last-child) {
+          padding-right: 15;
+          padding-left: 0;
+        }
+
+
+
+    </style>
+
+    <link rel="stylesheet" href="./static/lib/css//bootstrap.min.css">
+    <link rel="stylesheet" href="./static/lib/css/keen-dashboards.css">
+
+</head>
+
+<body class="application">
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="./" style="font-size:180%">Estimate Your Airbnb Rental Income</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+        <div class="row">
+
+            <div class="col-sm-6">
+                <div class="row">
+
+                    <!-- Location -->
+                    <div class="col-sm-4">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:130%">
+                                Location
+                            </div>
+                            <div class="chart-stage">
+                                <div id="location-box"></div>
+                                <input id="zipcode-input" type="text" autofocus maxlength=5 placeholder="type your zipcode">
+                                <div style="font-size:120%"><br>Describe your listing:</div>
+                                <form id="property-radio" style="font-size:120%">
+                                    <input type="radio" name="property-type" value="entire" checked> Entire home<br>
+                                    <input type="radio" name="property-type" value="private"> Private room<br>
+                                    <input type="radio" name="property-type" value="shared"> Shared room
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Location -->
+
+
+                    <div class="col-sm-8">
+
+                        <div class="row">
+                            <!-- Property -->
+                            <div class="col-sm-12">
+                                <div class="chart-wrapper">
+                                    <div class="chart-title" style="font-size:130%">
+                                        Property details
+                                    </div>
+                                    <div class="chart-stage" style="width: auto; height: 250px">
+                                        <div id="property-box"></div>
+
+                                        <div id="sliders" class="wrapper">
+
+                                            <p>Accommodates: <span id="accommodates">1</span></p>
+                                            <div id="accommodates_slider"></div>
+
+                                            <p><br><br>Bedrooms: <span id="bedrooms">1</span></p>
+                                            <div id="bedrooms_slider"></div>
+
+                                            <p><br><br>Bathrooms: <span id="bathrooms">1</span></p>
+                                            <div id="bathrooms_slider"></div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Property -->
+
+                    </div>
+
+                    <!-- Calendar -->
+                    <div class="col-sm-12">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:130%">
+                                % Occupancy per month
+                            </div>
+                            <div class="chart-stage">
+                                <div id="calendar-box" style="width: 460px; height: 200px"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Calendar -->
+
+                </div>
+            </div>
+
+
+            <div class="col-sm-6">
+
+                <div class="row">
+                    <!-- Map -->
+                    <div class="col-sm-12">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:130%">
+                                Map
+                            </div>
+                            <div class="chart-stage">
+                                <div id="map" style="width: 580px; height: 340px"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Map -->
+                </div>
+
+                <div class="row no-gutter">
+                    <!-- Prediction results -->
+                    <div class="col-sm-3">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:120%">
+                                Suggested price per night
+                            </div>
+                            <div class="chart-stage">
+                                <div id="price-box"></div>
+                                <!-- Price results as bar chart -->
+                                <div id="chart_area" class="wrapper">
+                                    <p class="space"></p>
+                                    <div id="bar_chart">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:120%">
+                                Expected occupancy
+                            </div>
+                            <div class="chart-stage">
+                                <div id="occupancy-box"></div>
+                                <div id="chart_area2" class="wrapper">
+                                    <p class="space"></p>
+                                    <div id="occ_box">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:120%">
+                                Predicted monthly income
+                            </div>
+                            <div class="chart-stage">
+                                <div id="income-box"></div>
+                                <div id="chart_area3" class="wrapper">
+                                    <p class="space"></p>
+                                    <div id="inc_box">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="chart-wrapper">
+                            <div class="chart-title" style="font-size:120%">
+                                Airbnb host service fees
+                            </div>
+                            <div class="chart-stage">
+                                <div id="fees-box"></div>
+                                <div id="chart_area4" class="wrapper">
+                                    <p class="space"></p>
+                                    <div id="fee_box">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <!-- Prediction results -->
+
+
+                    <!-- price controls -->
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <div id="charge-less">
+                                <input type="button"
+                                       value="10% LESS" style="font-size:100%">
+                                       <p class="smallspace"></p>
+                            </div>
+                            <div id="charge-more">
+                                <input type="button"
+                                       value="10% MORE" style="font-size:100%">
+                            </div>
+                        </div>
+                        <!-- Notes -->
+                        <div class="col-sm-9">
+                            <div class="chart-wrapper">
+                                <div class="chart-title" style="font-size:90%">
+                                    Note: The New York State Multiple Dwelling Law, which covers buildings with three or more units, prohibits transient rentals of fewer than 30 days at a time, unless the owner is present for the time a guest is renting.
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Notes -->
+                    </div>
+                    <!-- price controls -->
+            </div>
+        </div>
+    </div>
+
+    <script src="./static/lib/js/jquery.min.js"></script>
+    <script src="./static/lib/js/bootstrap.min.js"></script>
+    <script src="./static/lib/js/underscore-min.js"></script>
+    <script src="./static/lib/js/crossfilter.js"></script>
+    <script src="./static/lib/js/d3.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="./static/lib/js/dc.min.js"></script>
+    <script src="./static/lib/js/queue.js"></script>
+    <script src="./static/lib/js/leaflet.js"></script>
+    <script src="./static/lib/js/leaflet-heat.js"></script>
+    <script src="./static/lib/js/keen.min.js"></script>
+
+    <!-- Import the libraries: jQuery, d3, d3.slider -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <script src="static/d3.slider.js"></script>
+
+    <script>
+        var current_accommodates = 1;
+        var current_bedrooms = 1;
+        var current_bathrooms = 1;
+        var current_price = 0;
+        var current_occupancy = 0
+        var current_income = 0
+        var current_zipcode = 10000;
+        var current_entire = 1;
+        var current_private = 0;
+        var current_shared = 0;
+        var current_jan = 50;
+        var current_calendar = [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50];
+        var months_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var current_centerLat = 40.7829;
+        var current_centerLng = -73.9654;
+        var zipcodePolygon;
+        var manual_price = 0;
+        var current_fees = 0;
+
+        // price results
+        var chart = d3.select("#bar_chart")
+            .append("text")
+            .attr("id", "price_text")
+            .style("font-size", "44px")
+            .text("$" + current_price.toFixed(0));
+
+        // occupancy results
+        var chart2 = d3.select("#occ_box")
+            .append("text")
+            .attr("id", "occ_text")
+            .style("font-size", "44px")
+            .text(current_occupancy.toFixed(0) + "%");
+
+        // income results
+        var chart3 = d3.select("#inc_box")
+            .append("text")
+            .attr("id", "inc_text")
+            .style("font-size", "44px")
+            .text("$" + current_income.toFixed(0));
+
+        // fees results
+        var chart4 = d3.select("#fee_box")
+            .append("text")
+            .attr("id", "fee_text")
+            .style("font-size", "44px")
+            .text("$" + current_fees.toFixed(0));
+
+        // calendar
+
+        var margin = {top: 10, right: 10, bottom: 10, left: 20},
+            width = 580 - margin.left - margin.right,
+            height = 180 - margin.top - margin.bottom;
+
+        var x = d3.scale.ordinal()
+            .rangeRoundBands([0, width], .1);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var cal_xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var cal_yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+        // tool tip for calendar chart
+        var tip = d3.tip()
+                    .attr('class', 'd3-tip')
+                    .offset([-10, 0])
+                    .html(function(d) {
+                         return "<strong>Occupancy:</strong> <span style='color:white'>" + d[1].toFixed(0) + "%" + "</span>";
+                     })
+
+
+        // create svg object for calendar
+        var cal_svg = d3.select("#calendar-box")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // this will create x-axis of Jan-Feb-Mar-------Dec
+      x.domain(months_list.map(function(d) { return d; }));
+
+      // this should make y-axis go from 0 to 100 (constant, not dynamic)
+      y.domain([0, 100]);
+
+        // this puts all the svg elements for the x-axis
+        cal_svg.append("svg")
+            .attr("class", "x axis")
+            .attr("y", height)
+            .call(cal_xAxis);
+
+        // generates the calendar y-axis
+        cal_svg.append("svg")
+            .attr("class", "y axis")
+            .call(cal_yAxis)
+
+
+        function update() {
+            getAndPublishPrice(current_accommodates, current_entire, current_private, current_shared, current_bathrooms, current_bedrooms, current_zipcode);
+        }
+
+
+        // FUNCTION TO GET PRICE FROM PREDICTOR WITH AJAX
+
+        function getAndPublishPrice(accommodates, entire_home, private_room, shared_room, bathrooms, bedrooms, zipcode) {
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "/price",
+                dataType: "json",
+                async: true,
+                data: "{\"example\": [" + accommodates + ", " + entire_home + ", " + private_room + ", " + shared_room + ", " + bathrooms + ", " + bedrooms + ", " + zipcode + "]}",
+
+                success: function(data) {
+
+                    var pred_price = data["price"];
+                    d3.select("#price_text")
+                        .text("$" + pred_price.toFixed(0));
+
+                    var pred_occ = data["occupancy"];
+                    d3.select("#occ_text")
+                        .text(pred_occ.toFixed(0) + "%");
+
+                    var pred_inc = pred_price * pred_occ * 30 / 100
+                    d3.select("#inc_text")
+                        .text("$" + pred_inc.toFixed(0));
+
+                    var pred_fee = pred_inc * 0.03
+                    d3.select("#fee_text")
+                        .text("$" + pred_fee.toFixed(0));
+
+                    var pred_calendar = data["calendar"];
+                    var cal_zipped = [];
+                    months_list.forEach((key, i) =>cal_zipped.push([key, pred_calendar[i]]));
+
+                    cal_svg.selectAll(".bar").remove();
+
+                    cal_svg.call(tip);
+
+                    cal_svg.selectAll(".bar")
+                        .data(cal_zipped)
+                        .enter().append("rect")
+                        .attr("class", "bar")
+                        .attr("x", function(d) {
+                            // console.log(x(d[0]));
+                            return x(d[0]);
+                        })
+                        .attr("width", x.rangeBand())
+                        .attr("y", function(d) {
+                            // console.log(y(d[1]));
+                            return y(d[1]);
+                        })
+                        .attr("height", function(d) {
+                            return height - y(d[1]);
+                        })
+                        .on('mouseover', tip.show)
+                        .on('mouseout', tip.hide)
+
+                    var centerLat = data["lat"];
+                    var centerLng = data["lon"];
+
+                    map.setCenter({
+                        lat: centerLat,
+                        lng: centerLng
+                    });
+
+                    map.setZoom(14);
+
+                    clearResults();
+
+                    // Define the polygon path coordinates
+                    var coords = data["polygon_coords"];
+
+                    // Convert to LatLng objects
+                    var polygonCoords = coords.map(function(x) {
+                      return {
+                        lat: x[0],
+                        lng: x[1]
+                      };
+                    });
+
+                    // Construct the polygon
+                    zipcodePolygon = new google.maps.Polygon({
+                        paths: polygonCoords,
+                        strokeColor: '#FF0000',
+                        strokeOpacity: 2,
+                        fillColor: "#FF0000",
+                        fillOpacity: 0.35
+                    });
+                    zipcodePolygon.setMap(map);
+
+                },
+                error: function(result) {}
+            })
+
+        }
+
+        function clearResults() {
+            if (zipcodePolygon != null)
+                zipcodePolygon.setMap(null);
+        }
+
+        function update_manual() {
+            getAndPublishPrice_manual(manual_price, current_accommodates, current_entire, current_private, current_shared, current_bathrooms, current_bedrooms, current_zipcode);
+        }
+
+        //Get occupancy when price is manually overridden
+        // need to fix to include manually-input "current price"!!
+        function getAndPublishPrice_manual(price, accommodates, entire_home, private_room, shared_room, bathrooms, bedrooms, zipcode) {
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "/manualPrice",
+                dataType: "json",
+                async: true,
+                data: "{\"example\": [" + accommodates + ", " + entire_home + ", " + private_room + ", " + shared_room + ", " + bathrooms + ", " + bedrooms + ", " + zipcode + ", " + price + "]}",
+
+                success: function(data) {
+
+                    var pred_price = data["price"];
+                    d3.select("#price_text")
+                        .text("$" + pred_price.toFixed(0));
+
+                    var pred_occ = data["occupancy"];
+                    d3.select("#occ_text")
+                        .text(pred_occ.toFixed(0) + "%");
+
+                    var pred_inc = pred_price * pred_occ * 30 / 100
+                    d3.select("#inc_text")
+                        .text("$" + pred_inc.toFixed(0));
+
+                    var pred_fee = pred_inc * 0.03
+                    d3.select("#fee_text")
+                        .text("$" + pred_fee.toFixed(0));
+
+                    var pred_calendar = data["calendar"];
+                    var cal_zipped = [];
+                    months_list.forEach((key, i) =>cal_zipped.push([key, pred_calendar[i]]));
+
+                    cal_svg.selectAll(".bar").remove();
+
+                    cal_svg.call(tip);
+
+                    cal_svg.selectAll(".bar")
+                        .data(cal_zipped)
+                        .enter().append("rect")
+                        .attr("class", "bar")
+                        .attr("x", function(d) {
+                            // console.log(x(d[0]));
+                            return x(d[0]);
+                        })
+                        .attr("width", x.rangeBand())
+                        .attr("y", function(d) {
+                            // console.log(y(d[1]));
+                            return y(d[1]);
+                        })
+                        .attr("height", function(d) {
+                            return height - y(d[1]);
+                        })
+                        .on('mouseover', tip.show)
+                        .on('mouseout', tip.hide)
+
+                    var centerLat = data["lat"];
+                    var centerLng = data["lon"];
+
+                    map.setCenter({
+                        lat: centerLat,
+                        lng: centerLng
+                    });
+
+                    map.setZoom(14);
+
+                    clearResults();
+
+                    // Define the polygon path coordinates
+                    var coords = data["polygon_coords"];
+
+                    // Convert to LatLng objects
+                    var polygonCoords = coords.map(function(x) {
+                      return {
+                        lat: x[0],
+                        lng: x[1]
+                      };
+                    });
+
+                    // Construct the polygon
+                    zipcodePolygon = new google.maps.Polygon({
+                        paths: polygonCoords,
+                        strokeColor: '#FF0000',
+                        strokeOpacity: 2,
+                        fillColor: "#FF0000",
+                        fillOpacity: 0.35
+                    });
+                    zipcodePolygon.setMap(map);
+
+                },
+                error: function(result) {}
+            })
+
+        }
+
+
+        // USER INPUT FROM SLIDERS
+
+        d3.select('#accommodates_slider')
+            .call(
+                d3.slider()
+                .value(current_accommodates)
+                .min(1)
+                .max(5)
+                .step(1)
+                .axis(true)
+                .on("slide", function(evt, value) {
+                    d3.select('#accommodates').text(value);
+                    current_accommodates = value;
+                    update();
+                })
+            );
+
+        d3.select('#bedrooms_slider')
+            .call(
+                d3.slider()
+                .value(current_bedrooms)
+                .min(1)
+                .max(5)
+                .step(1)
+                .axis(true)
+                .on("slide", function(evt, value) {
+                    d3.select('#bedrooms').text(value);
+                    current_bedrooms = value;
+                    update();
+                })
+            );
+
+        d3.select('#bathrooms_slider')
+            .call(
+                d3.slider()
+                .value(current_bathrooms)
+                .min(1)
+                .max(5)
+                .step(1)
+                .axis(true)
+                .on("slide", function(evt, value) {
+                    d3.select('#bathrooms').text(value);
+                    current_bathrooms = value;
+                    update();
+                })
+            );
+
+        // USER INPUT FROM ZIPCODE TEXT BOX
+
+        $("#zipcode-input").on("change keyup paste", function() {
+            //Get zipcode value
+            var zipcode = $('#zipcode-input').val();
+
+            if (zipcode.length == 5 && current_zipcode != zipcode) {
+                current_zipcode = zipcode
+                update();
+            }
+
+        });
+
+        $("#property-radio").change(function() {
+            var property = $("input[name='property-type']:checked").val();
+            if (property == "entire") {
+                current_entire = 1;
+                current_private = 0;
+                current_shared = 0;
+                update();
+            } else if (property == "private") {
+                current_entire = 0;
+                current_private = 1;
+                current_shared = 0;
+                update();
+            } else if (property == "shared") {
+                current_entire = 0;
+                current_private = 0;
+                current_shared = 1;
+                update();
+            }
+
+        });
+
+        d3.select("#charge-less")
+          // on click: decrease price by 10% and recalculate occupancy
+          .on("click", function(evt, value) {
+              console.log("button clicked!");
+              var suggested_text = d3.select("#price_text").text().replace("$", "");
+              var suggested = parseInt(suggested_text);
+              manual_price = suggested - (0.1 * suggested);
+              console.log(manual_price);
+              update_manual();
+          });
+
+        d3.select("#charge-more")
+        // on click: increase price by 10% and recalculate occupancy
+        .on("click", function(evt, value) {
+            console.log("button clicked!");
+            var suggested_text = d3.select("#price_text").text().replace("$", "");
+            var suggested = parseInt(suggested_text);
+            manual_price = suggested + (0.1 * suggested);
+            console.log(manual_price);
+            update_manual();
+        });
+
+
+        // Style the map
+
+        var style = [{
+            "featureType": "water",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#e9e9e9"
+            }, {
+                "lightness": 17
+            }]
+        }, {
+            "featureType": "landscape",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#f5f5f5"
+            }, {
+                "lightness": 20
+            }]
+        }, {
+            "featureType": "road.highway",
+            "elementType": "geometry.fill",
+            "stylers": [{
+                "color": "#ffffff"
+            }, {
+                "lightness": 17
+            }]
+        }, {
+            "featureType": "road.highway",
+            "elementType": "geometry.stroke",
+            "stylers": [{
+                "color": "#ffffff"
+            }, {
+                "lightness": 29
+            }, {
+                "weight": 0.2
+            }]
+        }, {
+            "featureType": "road.arterial",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#ffffff"
+            }, {
+                "lightness": 18
+            }]
+        }, {
+            "featureType": "road.local",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#ffffff"
+            }, {
+                "lightness": 16
+            }]
+        }, {
+            "featureType": "poi",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#f5f5f5"
+            }, {
+                "lightness": 21
+            }]
+        }, {
+            "featureType": "poi.park",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#dedede"
+            }, {
+                "lightness": 21
+            }]
+        }, {
+            "elementType": "labels.text.stroke",
+            "stylers": [{
+                "visibility": "on"
+            }, {
+                "color": "#ffffff"
+            }, {
+                "lightness": 16
+            }]
+        }, {
+            "elementType": "labels.text.fill",
+            "stylers": [{
+                "saturation": 36
+            }, {
+                "color": "#333333"
+            }, {
+                "lightness": 40
+            }]
+        }, {
+            "elementType": "labels.icon",
+            "stylers": [{
+                "visibility": "off"
+            }]
+        }, {
+            "featureType": "transit",
+            "elementType": "geometry",
+            "stylers": [{
+                "color": "#f2f2f2"
+            }, {
+                "lightness": 19
+            }]
+        }, {
+            "featureType": "administrative",
+            "elementType": "geometry.fill",
+            "stylers": [{
+                "color": "#fefefe"
+            }, {
+                "lightness": 20
+            }]
+        }, {
+            "featureType": "administrative",
+            "elementType": "geometry.stroke",
+            "stylers": [{
+                "color": "#fefefe"
+            }, {
+                "lightness": 17
+            }, {
+                "weight": 1.2
+            }]
+        }];
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: {
+                    lat: current_centerLat,
+                    lng: current_centerLng
+                },
+                zoom: 12,
+                styles: style
+            });
+
+        }
+
+
+        // MAP FUNCTIONS
+    </script>
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap"&libraries=places></script>
+
+
+</body>
+
+</html>
